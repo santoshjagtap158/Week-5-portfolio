@@ -1,0 +1,7 @@
+
+let products = [
+  { id: 1, name: "Laptop", price: 50000 },
+  { id: 2, name: "Mouse", price: 500 }
+];
+
+module.exports = products;
