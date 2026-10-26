@@ -1,65 +1,93 @@
 
-const products = require("../data/products");
+const Product = require("../models/Product");
 
-// Get all products
-exports.getAllProducts = (req, res) => {
-  res.json(products);
+// Get all products from MongoDB
+exports.getAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.json(products);
+  } catch (error) {
+    console.error("GET ALL ERROR:", error);
+    res.status(500).json({ error: error.message });
+  }
 };
 
 // Get product by ID
-exports.getProductById = (req, res) => {
-  const id = Number(req.params.id);
-  const product = products.find((p) => p.id === id);
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
 
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found"
+      });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error("GET BY ID ERROR:", error);
+    res.status(400).json({ error: error.message });
   }
-
-  res.json(product);
 };
 
-exports.createProduct = (req, res) => {
-  const { name, price } = req.body;
+// Create a new product
+exports.createProduct = async (req, res) => {
+  try {
+    const product = await Product.create(req.body);
 
-  const newProduct = {
-    id: products.length
-      ? Math.max(...products.map((p) => p.id)) + 1
-      : 1,
-    name,
-    price: Number(price),
-  };
-
-  products.push(newProduct);
-  res.status(201).json(newProduct);
+    res.status(201).json(product);
+  } catch (error) {
+    console.error("CREATE ERROR:", error);
+    res.status(400).json({ error: error.message });
+  }
 };
 
-exports.updateProduct = (req, res) => {
-  const id = Number(req.params.id);
-  const product = products.find((p) => p.id === id);
+// Update a product
+exports.updateProduct = async (req, res) => {
+  try {
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        returnDocument: "after",
+        runValidators: true
+      }
+    );
 
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found"
+      });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error("UPDATE ERROR:", error);
+
+    res.status(400).json({
+      error: error.message,
+      stack: error.stack
+    });
   }
-
-  const { name, price } = req.body;
-
-  if (name !== undefined) product.name = name;
-  if (price !== undefined) product.price = Number(price);
-
-  res.json(product);
 };
 
-exports.deleteProduct = (req, res) => {
-  const id = Number(req.params.id);
-  const index = products.findIndex((p) => p.id === id);
+// Delete a product
+exports.deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
 
-  if (index === -1) {
-    return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found"
+      });
+    }
+
+    res.json({
+      message: "Product deleted successfully",
+      product
+    });
+  } catch (error) {
+    console.error("DELETE ERROR:", error);
+    res.status(400).json({ error: error.message });
   }
-
-  const deletedProduct = products.splice(index, 1)[0];
-  res.json({
-    message: "Product deleted successfully",
-    product: deletedProduct,
-  });
 };
